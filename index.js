@@ -3,6 +3,9 @@ const Manager = require('./lib/Manager')
 const Intern = require('./lib/Intern')
 const Engineer = require('./lib/Engineer')
 const inquirer = require('inquirer')
+const path = require('path')
+const generateCards =  require('./src/template')
+const employeeArray = []
 
 // WHEN I start the application
 // THEN I am prompted to enter the team manager’s name, employee ID, email address, and office number
@@ -15,7 +18,7 @@ const inquirer = require('inquirer')
 // WHEN I decide to finish building my team
 // THEN I exit the application, and the HTML is generated
 
-const managerQuestions  = [
+const managerQuestions = [
     {
         type: 'input',
         message: "What is the team manager's name?",
@@ -93,4 +96,64 @@ const internQuestions = [
     }
 ]
 
-//Handle responces and hold user data all together
+//Handle responses and hold user data all together
+
+function start() {
+    inquirer.prompt(managerQuestions)
+        .then((managerRes) => {
+            const manager = new Manager(managerRes.managerName , managerRes.managerID , managerRes.managerEmail, managerRes.managerOfficeNumber)
+            employeeArray.push(manager)
+            inquirer.prompt(postManagerPrompt)
+            .then((res)=>{
+                nextquestion(res.postManagerPrompt)
+            })
+        })
+
+}
+
+function nextquestion(choices) {
+    if (choices === 'Engineer') {
+        engineerPrompt();
+    } else if (choices === 'Intern') {
+        internPrompt()
+    } else {
+        resultsPage()
+    }
+}
+
+function engineerPrompt() {
+    inquirer.prompt(engineerQuestions)
+        .then((engineerRes)=>{
+            const engineer = new Engineer(engineerRes.engineerName, engineerRes.engineerID, engineerRes.engineerEmail, engineerRes.engineerGithub)
+            employeeArray.push(engineer)
+            inquirer.prompt(postManagerPrompt)
+            .then((res)=>{
+                nextquestion(res.postManagerPrompt)
+            })
+        })
+        
+}
+
+function internPrompt() {
+    inquirer.prompt(internQuestions)
+        .then((internRes)=>{
+            const intern = new Intern (internRes.internName, internRes.internID, internRes.internEmail, internRes.internSchool)
+            employeeArray.push(intern)
+            inquirer.prompt(postManagerPrompt)
+            .then((res)=>{
+                nextquestion(res.postManagerPrompt)
+            })
+        })
+}
+
+function resultsPage() {
+    //index.html needs to be written into the dist directoy. if the directory doesdnt exit we need to create it. 
+    if(!fs.existsSync(path.resolve(__dirname, 'dist'))) {
+       fs.mkdirSync(path.resolve(__dirname, 'dist'))
+    } 
+    fs.writeFileSync(path.join(path.resolve(__dirname, 'dist'), 'index.html'), generateCards(employeeArray), 'utf-8')
+}
+
+
+
+start()
